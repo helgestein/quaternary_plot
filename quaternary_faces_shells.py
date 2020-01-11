@@ -4,13 +4,15 @@ import numpy
 import pylab
 import operator, copy, os
 from matplotlib.patches import CirclePolygon
+import matplotlib.pyplot as plt
 #os.chdir('C:/Users/Gregoire/Documents/PythonCode/ternaryplot')
 from myternaryutility import TernaryPlot
 from myquaternaryutility import QuaternaryPlot
 
 
+
 class ternaryfaces_shells:
-    def __init__(self, ax, ellabels=['A', 'B', 'C', 'D'], offset=None, nintervals=10., outlinealpha=0.2, patchscale=1.):
+    def __init__(self, ax, ellabels=['A', 'B', 'C', 'D'],  offset=None, nintervals=10., outlinealpha=0.2, patchscale=1.):
         self.outlinealpha=outlinealpha
         self.nint=1.*nintervals
         self.delta=1./self.nint
@@ -29,7 +31,11 @@ class ternaryfaces_shells:
             self.shift_nshell+=[shift]
             shift+=self.delta*2.+2.*self.scalefcn(nshell)
         self.ax.set_xlim(-.1, shift+self.delta+1.*self.scalefcn(nshell))
-        
+        #self.fig, self.axis = plt.subplot(nrows=nrows, ncols=ncols, sharex=True, sharey=True)
+        #self.nrows = nrows
+        #self.ncols = ncols
+        self.point_list = []
+
         self.patch_xyc=lambda x, y, c, **kwargs:self.ax.add_patch(CirclePolygon((x, y),radius=patchscale*self.delta/3.**.5,resolution=6, color=c, **kwargs))
         if outlinealpha>0:
             self.outline()
@@ -122,10 +128,8 @@ class ternaryfaces_shells:
             inds_x_y=self.toCart(self.shellcomps, skipinds=skipinds, nshell=nshell)
             for inds, x, y in inds_x_y:
                 if patchfcn is None:
-                    self.ax.scatter(x, y, c=shellc[inds], s=s, **kwargs)
-
-                    #TODO: try to figure out a way to subscribe the scattering to the onpicx event
-                    #self.ax.figure.canvas.mpl_connect("pick_event", onpick)
+                    #self.ax.scatter(x, y, c=shellc[inds], s=s, **kwargs)
+                    self.point_list.append(self.ax.scatter(x, y, c=shellc[inds], s=s, picker=True, **kwargs))
                 else:
                     map(patchfcn, x, y, shellc[inds])
         if self.nint%4==0: #single point with no frame
@@ -133,13 +137,16 @@ class ternaryfaces_shells:
             if True in ba:
                 self.shellcomps=quatcomps[ba]#only 1 comp but might be duplicated
                 shellc=c[ba]
-                
+
                 if patchfcn is None:
                     for cv in shellc:
-                        self.ax.scatter(self.shift_nshell[-1], 0, c=cv, s=s, **kwargs)
+                        #self.ax.scatter(self.shift_nshell[-1], 0, c=cv, s=s, **kwargs)
+                        self.point_list.append(self.ax.scatter(self.shift_nshell[-1], 0, c=cv, s=s, picker=True, **kwargs))
                 else:
                     [patchfcn(self.shift_nshell[-1], 0, cv) for cv in shellc]
-                    
+        #Returns a list with all the points in the scatterplot
+        return self.point_list
+
     def quatscatter(self, quatcomps, c, skipinds=range(4), azim=-60, elev=30, alphaall=.2, alphashell=1., fontsize=14, outline=True,  **kwargs):
         numsubs=int(self.nint//4)+1
         quatcomps=numpy.int32(numpy.round(quatcomps*self.nint))
@@ -213,9 +220,3 @@ class ternaryfaces_shells:
             if x>xcrit:
                 return numpy.ones(4, dtype='float64')/4.
         return None
-
-    # def pick(self, x, y):
-    #     self.ax.plot([x],[y],',',markerfacecolor='red')
-    #
-    #     return None
-
