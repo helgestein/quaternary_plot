@@ -40,7 +40,7 @@ for i in range(0, nrows, 1):
 
 # Pick event for changing color of the picked Data
 def onpick(event):
-    event.artist._facecolors[event.ind, :] = (1, 1, 0, 1)
+    event.artist._facecolors[event.ind, :] = (1, 0, 0, 1)
     fig.canvas.draw()
 
 
